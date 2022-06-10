@@ -1,0 +1,8 @@
+# Python
+__pycache__
+
+# Folder
+personal_notebooks/*
+
+# Mac 
+.DS_Store
