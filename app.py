@@ -1,16 +1,12 @@
 from dash import dash, Dash, html, dcc, Input, Output, dash_table
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 import numpy as np
 import dash_bootstrap_components as dbc
 import pandas as pd
 from datetime import datetime
-import base64
 import random
-
-from charts.charts import PlotlyCharts
 
 
 app = dash.Dash(
@@ -32,6 +28,8 @@ output_graph_top10 = dcc.Graph(config={'displayModeBar': False})
 rest_produkte = dcc.Graph(config={'displayModeBar': False})
 turnover_graph = dcc.Graph(config={'displayModeBar': False})
 pred_bread = dcc.Graph(config={'displayModeBar': False})
+pred_coffee = dcc.Graph(config={'displayModeBar': False})
+pred_cake = dcc.Graph(config={'displayModeBar': False})
 
 location = dcc.Dropdown(
     ['Gesamt', 'Wallersdorf', 'Plattling', 'Deggendorf'],
@@ -44,7 +42,7 @@ location = dcc.Dropdown(
 load_interval = dcc.Interval(
     id="load_interval", 
     n_intervals=0, 
-    max_intervals=0, #<-- only run once
+    max_intervals=0,
     interval=1
 )
 
@@ -100,17 +98,24 @@ home_layout = html.Div([
     html.Div([
         dbc.Row([
             dbc.Col([]), 
-            dbc.Col([html.H5('\t92%', style={'float': 'right', 'color': 'green'}), html.H5('Aktuelle Genauigkeit:  ', style={'float': 'right'})])
+            dbc.Col([html.H5('92%', style={'float': 'right', 'color': 'green'}), html.H5('Aktuelle Genauigkeit:  \t', style={'float': 'right'})])
         ]),
 
         html.Hr(),
 
         dbc.Row([
             dbc.Col([
+                html.H5('Bread: 32', style={'margin-bottom': '0px'}),
                 pred_bread
             ]),
-            dbc.Col([]),
-            dbc.Col([])
+            dbc.Col([
+                html.H5('Coffee: 54', style={'margin-bottom': '0px'}),
+                pred_coffee
+            ]),
+            dbc.Col([
+                html.H5('Cake: 12', style={'margin-bottom': '0px'}),
+                pred_cake
+            ])
         ]) 
     ], style={'margin': '20px'})
 ])
@@ -159,37 +164,99 @@ history_layout = html.Div([
 
 ################### HOME ##########################
 @app.callback(Output(pred_bread, 'figure'),
+              Output(pred_coffee, 'figure'),
+              Output(pred_cake, 'figure'),
               Input('hidden-div', 'children'))
 def pred_graph(hidden):
     
     dfb = df.query('Items == "Bread"')
     dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
-    dfb = dfb.rename({0: 'true_values'}, axis=1)  # new method
+    dfb = dfb.rename({0: 'true_values'}, axis=1)
     for i in range(len(dfb)):
         d = random.randint(-5, 5)
         dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
 
     dfb = dfb[-10:]
 
-    fig = make_subplots(vertical_spacing = 0.05, rows=2, cols=1)
+    fig = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                    row_width=[0.3, 0.7])
+
+    bar_color = 'rgb(19, 216, 242)'
+    prob_dist_color = 'rgb(63, 92, 196)'
 
     figx = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-    #figx.update_layout(yaxis_visible=False)
-    figy = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction)
-    #figy.update_layout(yaxis_visible=False)
-    #figz = px.line(x=[0, 1, 2, 3, 4], y=[0, 2, 4, 3, 1], title='Life expectancy in Canada')
-    figz = go.Scatter(y=[0, 2, 3, 2, 1], mode="lines")
+    fig.update_layout(xaxis={'side': 'top'})
+    figy = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    figz = go.Scatter(y=[0,1,2,4,6,7,6,4,3,2,1], mode="lines", line_color=prob_dist_color)
 
+    #fig.update_layout(autosize=False,height=300)
     fig.add_trace(figx, row=1, col=1)
     fig.add_trace(figy, row=1, col=1)
     fig.add_trace(figz, row=2, col=1)
-    #fig.update_layout(xaxis={'side': 'top'})
-    fig.update_layout(title_text=f'Bread: 30')
-    #fig.update_layout(xaxis_rangeslider_visible=True, xaxis_range=[10,100])
-    #fig.update_xaxes(type="date", range=[-3,])
     fig['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
 
-    return fig
+    # hide all the xticks
+    fig.update_xaxes(showticklabels=False)
+    fig.update_xaxes(showticklabels=True, row=2, col=1)
+    fig.update_layout(showlegend=False)
+
+    #####-----------------
+
+    dfb = df.query('Items == "Coffee"')
+    dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
+    dfb = dfb.rename({0: 'true_values'}, axis=1)
+    for i in range(len(dfb)):
+        d = random.randint(-5, 5)
+        dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
+
+    dfb = dfb[-10:]
+
+    fig2 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                    row_width=[0.3, 0.7])
+    figx2 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
+    fig2.update_layout(xaxis={'side': 'top'})
+    figy2 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    figz2 = go.Scatter(y=[0,1,2,3,4,5,10,15,14,12,3], mode="lines", line_color=prob_dist_color)
+
+    fig2.add_trace(figx2, row=1, col=1)
+    fig2.add_trace(figy2, row=1, col=1)
+    fig2.add_trace(figz2, row=2, col=1)
+    fig2['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
+
+    # hide all the xticks
+    fig2.update_xaxes(showticklabels=False)
+    fig2.update_xaxes(showticklabels=True, row=2, col=1)
+    fig2.update_layout(showlegend=False)
+
+    #####-----------------
+
+    dfb = df.query('Items == "Cake"')
+    dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
+    dfb = dfb.rename({0: 'true_values'}, axis=1)
+    for i in range(len(dfb)):
+        d = random.randint(-5, 5)
+        dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
+
+    dfb = dfb[-10:]
+
+    fig3 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                    row_width=[0.3, 0.7])
+    figx3 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
+    fig3.update_layout(xaxis={'side': 'top'})
+    figy3 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    figz3 = go.Scatter(y=[0,1,2,3,5,10,15,19,27,15,10,5,2], mode="lines", line_color=prob_dist_color)
+
+    fig3.add_trace(figx3, row=1, col=1)
+    fig3.add_trace(figy3, row=1, col=1)
+    fig3.add_trace(figz3, row=2, col=1)
+    fig3['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
+
+    # hide all the xticks
+    fig3.update_xaxes(showticklabels=False)
+    fig3.update_xaxes(showticklabels=True, row=2, col=1)
+    fig3.update_layout(showlegend=False)
+
+    return fig, fig2, fig3
 
 
 # Update page by index
