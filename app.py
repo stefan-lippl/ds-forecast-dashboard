@@ -31,6 +31,12 @@ pred_bread = dcc.Graph(config={'displayModeBar': False})
 pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
 
+# Home
+history_cb = dcc.Checklist(
+    [' Historical View'],
+    id="history_cb"
+)
+
 location = dcc.Dropdown(
     ['Gesamt', 'Wallersdorf', 'Plattling', 'Deggendorf'],
     'Gesamt',
@@ -97,7 +103,8 @@ home_layout = html.Div([
 
     html.Div([
         dbc.Row([
-            dbc.Col([]), 
+            html.H5('Filter'),
+            dbc.Col([history_cb]), 
             dbc.Col([html.H5('92%', style={'float': 'right', 'color': 'green'}), html.H5('Aktuelle Genauigkeit:  \t', style={'float': 'right'})])
         ]),
 
@@ -166,9 +173,9 @@ history_layout = html.Div([
 @app.callback(Output(pred_bread, 'figure'),
               Output(pred_coffee, 'figure'),
               Output(pred_cake, 'figure'),
-              Input('hidden-div', 'children'))
-def pred_graph(hidden):
-    
+              Input(history_cb, 'value'))
+def pred_graph(history):
+
     dfb = df.query('Items == "Bread"')
     dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
     dfb = dfb.rename({0: 'true_values'}, axis=1)
@@ -178,21 +185,27 @@ def pred_graph(hidden):
 
     dfb = dfb[-10:]
 
-    fig = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                    row_width=[0.3, 0.7])
+    if history:
+        fig = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                        row_width=[0.3, 0.7])
+    else:
+        fig = make_subplots(rows=1, cols=1)
 
     bar_color = 'rgb(19, 216, 242)'
     prob_dist_color = 'rgb(63, 92, 196)'
-
-    figx = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-    fig.update_layout(xaxis={'side': 'top'})
-    figy = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    if history:
+        figx = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
+        fig.update_layout(xaxis={'side': 'top'})
+        figy = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
     figz = go.Scatter(y=[0,1,2,4,6,7,6,4,3,2,1], mode="lines", line_color=prob_dist_color)
 
     #fig.update_layout(autosize=False,height=300)
-    fig.add_trace(figx, row=1, col=1)
-    fig.add_trace(figy, row=1, col=1)
-    fig.add_trace(figz, row=2, col=1)
+    if history:
+        fig.add_trace(figx, row=1, col=1)
+        fig.add_trace(figy, row=1, col=1)
+        fig.add_trace(figz, row=2, col=1)
+    else:
+        fig.add_trace(figz, row=1, col=1)
     fig['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
 
     # hide all the xticks
@@ -211,16 +224,24 @@ def pred_graph(hidden):
 
     dfb = dfb[-10:]
 
-    fig2 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                    row_width=[0.3, 0.7])
-    figx2 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-    fig2.update_layout(xaxis={'side': 'top'})
-    figy2 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    if history:
+        fig2 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                        row_width=[0.3, 0.7])
+    else:
+        fig2 = make_subplots(rows=1, cols=1)
+    
+    if history:
+        figx2 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
+        fig2.update_layout(xaxis={'side': 'top'})
+        figy2 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
     figz2 = go.Scatter(y=[0,1,2,3,4,5,10,15,14,12,3], mode="lines", line_color=prob_dist_color)
 
-    fig2.add_trace(figx2, row=1, col=1)
-    fig2.add_trace(figy2, row=1, col=1)
-    fig2.add_trace(figz2, row=2, col=1)
+    if history:
+        fig2.add_trace(figx2, row=1, col=1)
+        fig2.add_trace(figy2, row=1, col=1)
+        fig2.add_trace(figz2, row=2, col=1)
+    else:
+        fig2.add_trace(figz2, row=1, col=1)
     fig2['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
 
     # hide all the xticks
@@ -239,16 +260,26 @@ def pred_graph(hidden):
 
     dfb = dfb[-10:]
 
-    fig3 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                    row_width=[0.3, 0.7])
-    figx3 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-    fig3.update_layout(xaxis={'side': 'top'})
-    figy3 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
-    figz3 = go.Scatter(y=[0,1,2,3,5,10,15,19,27,15,10,5,2], mode="lines", line_color=prob_dist_color)
+    if history:
+        fig3 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
+                        row_width=[0.3, 0.7])
+    else:
+        fig3 = make_subplots(rows=1, cols=1)
 
-    fig3.add_trace(figx3, row=1, col=1)
-    fig3.add_trace(figy3, row=1, col=1)
-    fig3.add_trace(figz3, row=2, col=1)
+    if history:
+        figx3 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
+        fig3.update_layout(xaxis={'side': 'top'})
+        figy3 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
+    
+    figz3 = go.Scatter(y=[0,1,2,3,5,10,15,19,27,15,10,5,2], mode="lines", line_color=prob_dist_color)
+  
+    if history:
+        fig3.add_trace(figx3, row=1, col=1)
+        fig3.add_trace(figy3, row=1, col=1)
+        fig3.add_trace(figz3, row=2, col=1)
+    else:
+        fig3.add_trace(figz3, row=1, col=1)
+
     fig3['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
 
     # hide all the xticks
