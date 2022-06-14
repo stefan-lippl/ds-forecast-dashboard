@@ -1,29 +1,44 @@
-from dash import dash, Dash, html, dcc, Input, Output, dash_table
+from dash import dash, Dash, html, dcc, Input, Output, dash_table, State
+import dash_bootstrap_components as dbc
+
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
 import numpy as np
-import dash_bootstrap_components as dbc
 import pandas as pd
-from datetime import datetime
 import random
+import base64
+import io
 
+from layouts.analytics import LayoutAnalytics
+from layouts.home import LayoutHome
+from layouts.data import LayoutData
+from layouts.analytics import LayoutAnalytics
+from layouts.history import LayoutHistory
 
+########## HTML ##########
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True
 )
-app.title = 'Forecast Dashboard'
+
+app.title = 'Bakery Demand'
+
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
 
 ##### DATA #####
-
 df = pd.read_csv('data/Bakery.csv', index_col=0)
 def dt(x):
     return str(x).split(' ')[0]
 df['date'] = df.date.apply(dt)
 
-### Components - Output ###
+##### Components #####
+# Home
 output_graph_top10 = dcc.Graph(config={'displayModeBar': False})
 rest_produkte = dcc.Graph(config={'displayModeBar': False})
 turnover_graph = dcc.Graph(config={'displayModeBar': False})
@@ -31,11 +46,30 @@ pred_bread = dcc.Graph(config={'displayModeBar': False})
 pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
 
-# Home
 history_cb = dcc.Checklist(
     [' Historical View'],
     id="history_cb"
 )
+
+uploader = dcc.Upload(
+        id='upload-data',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ]),
+        style={
+            'width': '100%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '10px'
+        },
+        # Don't allow multiple files to be uploaded
+        multiple=False
+    )
 
 location = dcc.Dropdown(
     ['Gesamt', 'Wallersdorf', 'Plattling', 'Deggendorf'],
@@ -44,51 +78,10 @@ location = dcc.Dropdown(
     #multi=True,
     clearable=False, style={'width': '70%', 'display': 'inline-block'})
 
-# within layout
-load_interval = dcc.Interval(
-    id="load_interval", 
-    n_intervals=0, 
-    max_intervals=0,
-    interval=1
-)
-
-index_page = html.Div([
-    dcc.Link('Go to Home', href='/home'),
-    html.Br(),
-    dcc.Link('Go to History', href='/history')
-])
-
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
-])
-
 history_table = dash_table.DataTable(
         df.to_dict('records'), 
         [{"name": i, "id": i} for i in df.columns],
         page_size=10
-    )
-
-navbar = dbc.NavbarSimple(
-        children=[
-            dbc.NavItem(dbc.NavLink("Home", href="/home")),
-            dbc.NavItem(dbc.NavLink("Analytics", href="/analytics")),
-            dbc.NavItem(dbc.NavLink("History", href="/history")),
-            dbc.DropdownMenu(
-                children=[
-                    dbc.DropdownMenuItem("More pages", header=True),
-                    dbc.DropdownMenuItem("Profil", href="#"),
-                ],
-                nav=True,
-                in_navbar=True,
-                label="More",
-            ),
-        ],
-        brand="Robros - Dashboard",
-        brand_href="/home",
-        color="#30a3d1",
-        dark=True,
-        style={'box-shadow': '0px 0px 3px 0px #000000'}
     )
 
 
@@ -96,73 +89,22 @@ navbar = dbc.NavbarSimple(
 ##################### LAYOUT ######################
 ###################################################
 
-################## LAYOUT - HOME ##################
-home_layout = html.Div([
-    navbar,
-    html.Div([],id="hidden-div", style={"display":"none"}),
+### HOME ###
+home = LayoutHome()
+home_layout = home.create(history_cb=history_cb, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake)
 
-    html.Div([
-        dbc.Row([
-            html.H5('Filter'),
-            dbc.Col([history_cb]), 
-            dbc.Col([html.H5('92%', style={'float': 'right', 'color': 'green'}), html.H5('Aktuelle Genauigkeit:  \t', style={'float': 'right'})])
-        ]),
+### DATA ###
+data = LayoutData()
+data_layout = data.create(uploader=uploader)
 
-        html.Hr(),
+### ANALYTICS ###
+analytics = LayoutAnalytics()
+analytics_layout = analytics.create(location, output_graph_top10, turnover_graph, rest_produkte)
 
-        dbc.Row([
-            dbc.Col([
-                html.H5('Bread: 32', style={'margin-bottom': '0px'}),
-                pred_bread
-            ]),
-            dbc.Col([
-                html.H5('Coffee: 54', style={'margin-bottom': '0px'}),
-                pred_coffee
-            ]),
-            dbc.Col([
-                html.H5('Cake: 12', style={'margin-bottom': '0px'}),
-                pred_cake
-            ])
-        ]) 
-    ], style={'margin': '20px'})
-])
+### HISTORY ###
+history = LayoutHistory()
+history_layout = history.create(df=df)
 
-################## LAYOUT - ANALYTICS ##################
-analytics_layout = html.Div([
-    navbar,
-    html.Div([],id="hidden-div", style={"display":"none"}),
-
-    html.Div([
-        html.H5('Filter'),
-        dbc.Row([
-            dbc.Col([location]), 
-        ]),
-
-        html.Hr(),
-
-        dbc.Row([
-            dbc.Col([output_graph_top10]), 
-            dbc.Col([rest_produkte]),
-        ], style={'margin-top': '10px'}),
-
-        dbc.Row([turnover_graph])
-    ], style={'margin': '20px'})
-    
-])
-
-################## LAYOUT - HISTORY ##################
-history_layout = html.Div([
-    navbar,
-    html.Div([
-        html.H5('Filter'),
-        dbc.Row([
-            dbc.Col([dcc.Dropdown(options=[{'label':i, 'value':i} for i in df['Items'].unique()], id='items_dropdown', placeholder="Filter product", multi=True)]),
-            dbc.Col([dcc.Dropdown([10, 15, 20, 25, 30, 35, 40, 45, 50], '10', id='table-count', placeholder="Orders per site")]),
-            dbc.Col([dcc.Dropdown(options=[{'label':i, 'value':i} for i in df['location'].unique()], id='loc-history', placeholder='Location', multi=True)]) 
-        ]),
-        html.Div(id='table-container', style={'margin-top': '30px'})
-    ], style={'margin': '20px'})
-])
 
 
 ###################################################
@@ -290,20 +232,6 @@ def pred_graph(history):
     return fig, fig2, fig3
 
 
-# Update page by index
-@app.callback(Output('page-content', 'children'),
-              [Input('url', 'pathname')])
-def display_page(pathname):
-    if pathname == '/home':
-        return home_layout
-    if pathname == '/analytics':
-        return analytics_layout
-    elif pathname == '/history':
-        return history_layout
-    else:
-        return home_layout
-
-
 @app.callback(Output(output_graph_top10, 'figure'), 
               Output(rest_produkte, 'figure'),
               Input('hidden-div', 'children'),
@@ -348,7 +276,7 @@ def update_table_per_filters___history(value, value2):
             return dash_table.DataTable(
             dfc.to_dict('records'), 
             [{"name": i, "id": i} for i in dfc.columns],
-            page_size=25
+            page_size=15
         )
         else:
             return dash_table.DataTable(
@@ -361,7 +289,7 @@ def update_table_per_filters___history(value, value2):
             return dash_table.DataTable(
             new_df.to_dict('records'), 
             [{"name": i, "id": i} for i in new_df.columns],
-            page_size=25
+            page_size=15
         )
         else:
             return dash_table.DataTable(
@@ -379,6 +307,64 @@ def turnover_graph__analytics(value):
 
     fig = px.pie(dfc, values=ser_locations.values, names=ser_locations.index)
     return fig
+
+
+
+############# Data
+def parse_contents(contents, filename, date):
+    _, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+
+        dash_table.DataTable(
+            df.to_dict('records'),
+            [{'name': i, 'id': i} for i in df.columns],
+            page_size=10
+        )
+    ])
+
+@app.callback(Output('output-data-upload', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              State('upload-data', 'last_modified'))
+def update_output(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        children = [
+            parse_contents(c, n, d) for c, n, d in
+            zip(list_of_contents, list_of_names, list_of_dates)]
+        return children
+
+
+# Update page by index
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/home':
+        return home_layout
+    if pathname == '/data':
+        return data_layout
+    if pathname == '/analytics':
+        return analytics_layout
+    elif pathname == '/history':
+        return history_layout
+    else:
+        return home_layout
 
 
 if __name__ == '__main__':

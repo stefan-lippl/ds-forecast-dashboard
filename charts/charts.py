@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 
-class PlotlyCharts():
+class PlotlyCharts:
     """Creates a Plotly plot"""
     def __init__(self, ser: pd.Series, 
                  chart_type: str, 
