@@ -68,7 +68,7 @@ uploader = dcc.Upload(
             'margin': '10px'
         },
         # Don't allow multiple files to be uploaded
-        multiple=False
+        multiple=True
     )
 
 location = dcc.Dropdown(
@@ -312,7 +312,7 @@ def turnover_graph__analytics(value):
 
 ############# Data
 def parse_contents(contents, filename, date):
-    _, content_string = contents.split(',')
+    content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     try:
