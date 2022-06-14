@@ -18,9 +18,14 @@ from layouts.analytics import LayoutAnalytics
 from layouts.history import LayoutHistory
 
 ########## HTML ##########
+FONT_AWESOME = "https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+ext_ss = [
+    dbc.themes.BOOTSTRAP,
+    FONT_AWESOME
+]
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=ext_ss,
     suppress_callback_exceptions=True
 )
 
@@ -46,10 +51,7 @@ pred_bread = dcc.Graph(config={'displayModeBar': False})
 pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
 
-history_cb = dcc.Checklist(
-    [' Historical View'],
-    id="history_cb"
-)
+history_cb = dcc.Checklist([' Historical View'])
 
 uploader = dcc.Upload(
         id='upload-data',
@@ -84,7 +86,6 @@ history_table = dash_table.DataTable(
         page_size=10
     )
 
-
 ###################################################
 ##################### LAYOUT ######################
 ###################################################
@@ -111,7 +112,8 @@ history_layout = history.create(df=df)
 #################### FUNCTIONS ####################
 ###################################################
 
-################### HOME ##########################
+### HOME ###
+
 @app.callback(Output(pred_bread, 'figure'),
               Output(pred_coffee, 'figure'),
               Output(pred_cake, 'figure'),
@@ -232,6 +234,7 @@ def pred_graph(history):
     return fig, fig2, fig3
 
 
+### ANALYTICS ###
 @app.callback(Output(output_graph_top10, 'figure'), 
               Output(rest_produkte, 'figure'),
               Input('hidden-div', 'children'),
@@ -260,7 +263,17 @@ def top_10_graph(hidden, location):
                                     )
     return output_graph_top10, rest_produkte
 
+@app.callback(Output(turnover_graph, 'figure'), 
+              Input('hidden-div', 'children'))
+def turnover_graph__analytics(value):
+    dfc = df.copy()
+    ser_locations = dfc.groupby('location').size()
 
+    fig = px.pie(dfc, values=ser_locations.values, names=ser_locations.index)
+    return fig
+
+
+### HISTORY ###
 @app.callback(Output('table-container', 'children'),
               Input('table-count', 'value'),
               Input('items_dropdown', 'value'),)
@@ -299,18 +312,7 @@ def update_table_per_filters___history(value, value2):
             )
 
 
-@app.callback(Output(turnover_graph, 'figure'), 
-              Input('hidden-div', 'children'))
-def turnover_graph__analytics(value):
-    dfc = df.copy()
-    ser_locations = dfc.groupby('location').size()
-
-    fig = px.pie(dfc, values=ser_locations.values, names=ser_locations.index)
-    return fig
-
-
-
-############# Data
+### DATA ###
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -351,7 +353,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         return children
 
 
-# Update page by index
+### NAVIGATION ### 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):

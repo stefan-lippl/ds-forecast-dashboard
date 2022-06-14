@@ -2,19 +2,18 @@ import sys
 sys.path.append('../')
 from dash import html
 import dash_bootstrap_components as dbc
-
 from layouts.navbar import LayoutNavbar
+from dash_iconify import DashIconify
 
 class LayoutHome:
     def create(self, history_cb, pred_bread,pred_coffee, pred_cake):
-        navbar = LayoutNavbar().create()
+        navbar = LayoutNavbar('Home').create()
         home_layout = html.Div([
             navbar,
             html.Div([],id="hidden-div", style={"display":"none"}),
-
             html.Div([
                 dbc.Row([
-                    dbc.Col([html.H5('Filter')]),
+                    dbc.Col([DashIconify(icon="charm:filter", width=30)]),
                     dbc.Col([html.H5('92%', style={'float': 'right', 'color': 'green'}), html.H5('Aktuelle Genauigkeit:  \t', style={'float': 'right'})])
                 ]),
                 dbc.Row([

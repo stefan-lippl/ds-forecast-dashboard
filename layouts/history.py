@@ -8,7 +8,7 @@ from dash import html, dcc
 
 class LayoutHistory:
     def create(self, df):
-        navbar = LayoutNavbar().create()
+        navbar = LayoutNavbar('History').create()
 
         history_layout = html.Div([
             navbar,

@@ -6,7 +6,7 @@ from layouts.navbar import LayoutNavbar
 
 class LayoutData:
     def create(self, uploader):
-        navbar = LayoutNavbar().create()
+        navbar = LayoutNavbar('Data').create()
 
         data_layout = html.Div([
             navbar,

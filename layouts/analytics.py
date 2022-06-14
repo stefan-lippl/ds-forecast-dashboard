@@ -6,7 +6,7 @@ from layouts.navbar import LayoutNavbar
 
 class LayoutAnalytics:
     def create(self, location, output_graph_top10, turnover_graph, rest_produkte):
-        navbar = LayoutNavbar().create()
+        navbar = LayoutNavbar('Analytics').create()
 
         analytics_layout = html.Div([
             navbar,
