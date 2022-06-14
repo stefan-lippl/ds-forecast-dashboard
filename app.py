@@ -51,7 +51,12 @@ pred_bread = dcc.Graph(config={'displayModeBar': False})
 pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
 
-history_cb = dcc.Checklist([' Historical View'])
+history_cb = dcc.Checklist([' Historical View'], [' Historical View'])
+
+filter_box = html.Div([
+    html.H5('Filter'),
+    history_cb
+], id='filter_checklist', style={'display': 'block'})
 
 uploader = dcc.Upload(
         id='upload-data',
@@ -92,7 +97,7 @@ history_table = dash_table.DataTable(
 
 ### HOME ###
 home = LayoutHome()
-home_layout = home.create(history_cb=history_cb, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake)
+home_layout = home.create(history_cb=filter_box, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake)
 
 ### DATA ###
 data = LayoutData()
@@ -113,6 +118,18 @@ history_layout = history.create(df=df)
 ###################################################
 
 ### HOME ###
+@app.callback(
+   Output(component_id='filter_checklist', component_property='style'),
+   [Input(component_id='filter_switch', component_property='on')])
+
+def show_hide_element(on):
+    if on:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+
 
 @app.callback(Output(pred_bread, 'figure'),
               Output(pred_coffee, 'figure'),
