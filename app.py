@@ -17,6 +17,8 @@ from layouts.data import LayoutData
 from layouts.analytics import LayoutAnalytics
 from layouts.history import LayoutHistory
 
+from charts.bar_chart import PlotlyBarChart
+
 ########## HTML ##########
 FONT_AWESOME = "https://use.fontawesome.com/releases/v5.7.2/css/all.css"
 ext_ss = [
@@ -50,6 +52,7 @@ turnover_graph = dcc.Graph(config={'displayModeBar': False})
 pred_bread = dcc.Graph(config={'displayModeBar': False})
 pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
+pred_sandwitch = dcc.Graph(config={'displayModeBar': False})
 
 history_cb = dcc.Checklist([' Historical View'], [' Historical View'])
 
@@ -97,7 +100,7 @@ history_table = dash_table.DataTable(
 
 ### HOME ###
 home = LayoutHome()
-home_layout = home.create(history_cb=filter_box, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake)
+home_layout = home.create(history_cb=filter_box, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake, pred_sandwitch=pred_sandwitch)
 
 ### DATA ###
 data = LayoutData()
@@ -129,126 +132,19 @@ def show_hide_element(on):
         return {'display': 'none'}
 
 
-
-
 @app.callback(Output(pred_bread, 'figure'),
               Output(pred_coffee, 'figure'),
               Output(pred_cake, 'figure'),
+              Output(pred_sandwitch, 'figure'),
               Input(history_cb, 'value'))
 def pred_graph(history):
+    bar = PlotlyBarChart()
+    fig1 = bar.create(df=df, history=history, item='Bread')
+    fig2 = bar.create(df=df, history=history, item='Coffee')
+    fig3 = bar.create(df=df, history=history, item='Cake')
+    fig4 = bar.create(df=df, history=history, item='Sandwich')
 
-    dfb = df.query('Items == "Bread"')
-    dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
-    dfb = dfb.rename({0: 'true_values'}, axis=1)
-    for i in range(len(dfb)):
-        d = random.randint(-5, 5)
-        dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
-
-    dfb = dfb[-10:]
-
-    if history:
-        fig = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                        row_width=[0.3, 0.7])
-    else:
-        fig = make_subplots(rows=1, cols=1)
-
-    bar_color = 'rgb(19, 216, 242)'
-    prob_dist_color = 'rgb(63, 92, 196)'
-    if history:
-        figx = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-        fig.update_layout(xaxis={'side': 'top'})
-        figy = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
-    figz = go.Scatter(y=[0,1,2,4,6,7,6,4,3,2,1], mode="lines", line_color=prob_dist_color)
-
-    #fig.update_layout(autosize=False,height=300)
-    if history:
-        fig.add_trace(figx, row=1, col=1)
-        fig.add_trace(figy, row=1, col=1)
-        fig.add_trace(figz, row=2, col=1)
-    else:
-        fig.add_trace(figz, row=1, col=1)
-    fig['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
-
-    # hide all the xticks
-    fig.update_xaxes(showticklabels=False)
-    fig.update_xaxes(showticklabels=True, row=2, col=1)
-    fig.update_layout(showlegend=False)
-
-    #####-----------------
-
-    dfb = df.query('Items == "Coffee"')
-    dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
-    dfb = dfb.rename({0: 'true_values'}, axis=1)
-    for i in range(len(dfb)):
-        d = random.randint(-5, 5)
-        dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
-
-    dfb = dfb[-10:]
-
-    if history:
-        fig2 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                        row_width=[0.3, 0.7])
-    else:
-        fig2 = make_subplots(rows=1, cols=1)
-    
-    if history:
-        figx2 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-        fig2.update_layout(xaxis={'side': 'top'})
-        figy2 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
-    figz2 = go.Scatter(y=[0,1,2,3,4,5,10,15,14,12,3], mode="lines", line_color=prob_dist_color)
-
-    if history:
-        fig2.add_trace(figx2, row=1, col=1)
-        fig2.add_trace(figy2, row=1, col=1)
-        fig2.add_trace(figz2, row=2, col=1)
-    else:
-        fig2.add_trace(figz2, row=1, col=1)
-    fig2['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
-
-    # hide all the xticks
-    fig2.update_xaxes(showticklabels=False)
-    fig2.update_xaxes(showticklabels=True, row=2, col=1)
-    fig2.update_layout(showlegend=False)
-
-    #####-----------------
-
-    dfb = df.query('Items == "Cake"')
-    dfb = pd.DataFrame(dfb.groupby('date').size()).reset_index()
-    dfb = dfb.rename({0: 'true_values'}, axis=1)
-    for i in range(len(dfb)):
-        d = random.randint(-5, 5)
-        dfb.loc[i, 'prediction'] = dfb.loc[i, 'true_values'] + d
-
-    dfb = dfb[-10:]
-
-    if history:
-        fig3 = make_subplots(vertical_spacing = 0.005, rows=2, cols=1,
-                        row_width=[0.3, 0.7])
-    else:
-        fig3 = make_subplots(rows=1, cols=1)
-
-    if history:
-        figx3 = go.Bar(name='True Sales', x=dfb.date, y=dfb.true_values)
-        fig3.update_layout(xaxis={'side': 'top'})
-        figy3 = go.Bar(name='Prediction', x=dfb.date, y=dfb.prediction, marker=dict(color=bar_color))
-    
-    figz3 = go.Scatter(y=[0,1,2,3,5,10,15,19,27,15,10,5,2], mode="lines", line_color=prob_dist_color)
-  
-    if history:
-        fig3.add_trace(figx3, row=1, col=1)
-        fig3.add_trace(figy3, row=1, col=1)
-        fig3.add_trace(figz3, row=2, col=1)
-    else:
-        fig3.add_trace(figz3, row=1, col=1)
-
-    fig3['layout'].update(margin=dict(l=0,r=0,b=0,t=30))
-
-    # hide all the xticks
-    fig3.update_xaxes(showticklabels=False)
-    fig3.update_xaxes(showticklabels=True, row=2, col=1)
-    fig3.update_layout(showlegend=False)
-
-    return fig, fig2, fig3
+    return fig1, fig2, fig3, fig4
 
 
 ### ANALYTICS ###

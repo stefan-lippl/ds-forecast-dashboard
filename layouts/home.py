@@ -7,11 +7,13 @@ from dash_iconify import DashIconify
 import dash_daq as daq
 
 class LayoutHome:
-    def create(self, history_cb, pred_bread,pred_coffee, pred_cake):
+    def create(self, history_cb, pred_bread,pred_coffee, pred_cake, pred_sandwitch):
         navbar = LayoutNavbar('Home').create()
         home_layout = html.Div([
             navbar,
+
             html.Div([],id="hidden-div", style={"display":"none"}),
+
             html.Div([
                 dbc.Row([
                     dbc.Col([daq.BooleanSwitch(id='filter_switch', 
@@ -26,7 +28,6 @@ class LayoutHome:
                     dbc.Col([history_cb])
                 ]),
                 html.Hr(),
-
                 dbc.Row([
                     dbc.Col([
                         html.H5('Bread: 32', style={'margin-bottom': '0px'}),
@@ -39,9 +40,13 @@ class LayoutHome:
                     dbc.Col([
                         html.H5('Cake: 12', style={'margin-bottom': '0px'}),
                         pred_cake
+                    ]),
+                    dbc.Col([
+                        html.H5('Sandwich: 5', style={'margin-bottom': '0px'}),
+                        pred_sandwitch
                     ])
                 ]) 
             ], style={'margin': '20px'})
-        ])
+        ], style={'height':'100vh','margin':'0px','backgroundColor':'#f0f4fa'})
 
         return home_layout

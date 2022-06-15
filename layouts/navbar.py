@@ -9,27 +9,31 @@ class LayoutNavbar:
         self.title = title
 
     def create(self):
+        margin_left = '8px'
+        margin_right = '8px'
+
         navbar = dbc.NavbarSimple(
+            
                 children=[
                     dbc.NavItem(dbc.NavLink(DashIconify(
                             icon="ant-design:home-outlined",
                             width=30,
-                        ), href="/home"), style={'margin-left': '5px', 'margin-right': '5px'}),
+                        ), href="/home"), style={'margin-left': margin_left, 'margin-right': margin_right}),
                     
                     dbc.NavItem(dbc.NavLink(DashIconify(
                             icon="eos-icons:big-data-outlined",
                             width=30,
-                        ), href="/data"), style={'margin-left': '5px', 'margin-right': '5px'}),
+                        ), href="/data"), style={'margin-left': margin_left, 'margin-right': margin_right}),
 
                     dbc.NavItem(dbc.NavLink(DashIconify(
                             icon="ion:analytics-outline",
                             width=30,
-                        ), href="/analytics"), style={'margin-left': '5px', 'margin-right': '5px'}),
+                        ), href="/analytics"), style={'margin-left': margin_left, 'margin-right': margin_right}),
 
                     dbc.NavItem(dbc.NavLink(DashIconify(
                             icon="fontisto:history",
                             width=30,
-                        ), href="/history"), style={'margin-left': '5px', 'margin-right': '5px'}),
+                        ), href="/history"), style={'margin-left': margin_left, 'margin-right': margin_right}),
 
                     
                     #dbc.DropdownMenu(
