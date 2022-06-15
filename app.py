@@ -54,10 +54,12 @@ pred_coffee = dcc.Graph(config={'displayModeBar': False})
 pred_cake = dcc.Graph(config={'displayModeBar': False})
 pred_sandwitch = dcc.Graph(config={'displayModeBar': False})
 
-history_cb = dcc.Checklist([' Historical View'], [' Historical View'])
+#history_cb = dcc.Checklist([' Historical View'], [' Historical View'])
+history_cb = dcc.RadioItems(['on',  'off'], 'on')
 
 filter_box = html.Div([
     html.H5('Filter'),
+    html.P('Historical Chart'),
     history_cb
 ], id='filter_checklist', style={'display': 'block'})
 
@@ -88,6 +90,12 @@ location = dcc.Dropdown(
     #multi=True,
     clearable=False, style={'width': '70%', 'display': 'inline-block'})
 
+filter_form_analytics = html.Div([
+    html.H5('Filter'),
+    location
+], id='filter_form_analytics', style={'display': 'block'})
+
+
 history_table = dash_table.DataTable(
         df.to_dict('records'), 
         [{"name": i, "id": i} for i in df.columns],
@@ -100,7 +108,7 @@ history_table = dash_table.DataTable(
 
 ### HOME ###
 home = LayoutHome()
-home_layout = home.create(history_cb=filter_box, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake, pred_sandwitch=pred_sandwitch)
+home_layout = home.create(filter=filter_box, pred_bread=pred_bread, pred_coffee=pred_coffee, pred_cake=pred_cake, pred_sandwitch=pred_sandwitch)
 
 ### DATA ###
 data = LayoutData()
@@ -108,7 +116,7 @@ data_layout = data.create(uploader=uploader)
 
 ### ANALYTICS ###
 analytics = LayoutAnalytics()
-analytics_layout = analytics.create(location, output_graph_top10, turnover_graph, rest_produkte)
+analytics_layout = analytics.create(filter_form_analytics, output_graph_top10, turnover_graph, rest_produkte)
 
 ### HISTORY ###
 history = LayoutHistory()
@@ -148,6 +156,16 @@ def pred_graph(history):
 
 
 ### ANALYTICS ###
+@app.callback(
+   Output(component_id='filter_form_analytics', component_property='style'),
+   [Input(component_id='filter_switch_analytics', component_property='on')])
+def filter_analytics(on):
+    if on:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
 @app.callback(Output(output_graph_top10, 'figure'), 
               Output(rest_produkte, 'figure'),
               Input('hidden-div', 'children'),
